@@ -1,0 +1,92 @@
+Hadoop集群规划
+	HDFS: NN DN
+	YARN: RM NM
+
+hadoop000 192.168.199.234
+	NN RM
+	DN NM
+hadoop001 192.168.199.235
+	DN NM
+hadoop002 192.168.199.236
+	DN NM
+
+(每台)
+/etc/hostname: 修改hostname(hadoop000/hadoop001/hadoop002)
+/etc/hosts： ip和hostname的映射关系
+	192.168.199.234 hadoop000
+	192.168.199.235 hadoop001
+	192.168.199.236 hadoop002
+	192.168.199.234 localhost
+
+
+前置安装 ssh
+(每台)ssh免密码登陆：ssh-keygen -t rsa
+在hadoop000机器上进行caozuo 
+ssh-copy-id -i ~/.ssh/id_rsa.pub hadoop000
+ssh-copy-id -i ~/.ssh/id_rsa.pub hadoop001
+ssh-copy-id -i ~/.ssh/id_rsa.pub hadoop002
+
+
+JDK安装
+1）先在hadoop000机器上部署了jdk
+2）将jdk bin配置到系统环境变量
+3）将jdk拷贝到其他节点上去(从hadoop000机器出发)
+scp -r jdk1.8.0_91 hadoop@hadoop001:~/app/
+scp -r jdk1.8.0_91 hadoop@hadoop002:~/app/
+
+scp ~/.bash_profile hadoop@hadoop001:~/
+scp ~/.bash_profile hadoop@hadoop002:~/
+
+Hadoop部署
+1）hadoop-env.sh
+	JAVA_HOME
+2) core-site.xml
+<property>
+	<name>fs.default.name</name>
+	<value>hdfs://hadoop000:8020</value>
+</property>
+
+3) hdfs-site.xml
+<property>
+  <name>dfs.namenode.name.dir</name>
+  <value>/home/hadoop/app/tmp/dfs/name</value>
+</property>
+
+<property>
+  <name>dfs.datanode.data.dir</name>
+  <value>/home/hadoop/app/tmp/dfs/data</value>
+</property>
+
+4) yarn-site.xml
+<property>
+  <name>yarn.nodemanager.aux-services</name>
+  <value>mapreduce_shuffle</value>
+ </property>
+
+<property>
+    <name>yarn.resourcemanager.hostname</name>
+    <value>hadoop000</value>
+</property>
+5) mapred-site.xml
+<property>
+	<name>mapreduce.framework.name</name>
+	<value>yarn</value>
+</property>
+
+6) slaves
+
+7) 分发hadoop到其他机器
+scp -r hadoop-2.6.0-cdh5.15.1 hadoop@hadoop001:~/app/
+scp -r hadoop-2.6.0-cdh5.15.1 hadoop@hadoop002:~/app/
+
+scp ~/.bash_profile hadoop@hadoop001:~/
+scp ~/.bash_profile hadoop@hadoop002:~/
+
+8) NN格式化： hadoop namenode -format
+9) 启动HDFS
+10) 启动YARN
+
+
+
+
+

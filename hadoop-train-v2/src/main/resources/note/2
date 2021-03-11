@@ -1,0 +1,76 @@
+Nutch、Hadoop：Doug Cutting
+Spring：
+
+
+学习一个新的框架，我的风格是直接查看该项目的官网地址
+Hadoop
+Hive
+
+Apache社区的顶级项目：xxxx.apache.org
+	hadoop.apache.org
+	hive.apache.org
+	hbase.apache.org
+	spark.apache.org
+	flink.apache.org
+	storm.apache.org
+
+reliable, scalable, distributed computing.
+
+
+单机存储
+单机计算
+
+Hadoop：提供分布式的存储（一个文件被拆分成很多个块，并且以副本的方式存储在各个节点中）和计算
+	是一个分布式的系统基础架构：用户可以在不了解分布式底层细节的情况下进行使用。
+
+分布式文件系统：HDFS实现将文件分布式存储在很多的服务器上
+分布式计算框架：MapReduce实现在很多机器上分布式并行计算
+分布式资源调度框架：YARN实现集群资源管理以及作业的调度
+
+
+
+文件、块、副本
+	文件：test.log  200M
+	块(block)：默认的blocksize是128M， 2个块 = 1个128M + 1个72M
+	副本：HDFS默认3副本
+
+	node1：blk1  blk2  X  
+	node2：blk2
+	node3：blk1  blk2
+	node4：
+	node5：blk1
+
+
+去IoE
+
+
+
+
+常用的Hadoop发行版
+	Apache
+		优点：纯开源
+		缺点：不同版本/不同框架之间整合 jar冲突... 吐血
+
+	CDH：https://www.cloudera.com/   60-70%
+		优点：cm(cloudera manager) 通过页面一键安装各种框架、升级、impala
+		缺点：cm不开源、与社区版本有些许出入
+
+	Hortonworks：HDP  企业发布自己的数据平台可以直接基于页面框架进行改造
+		优点：原装Hadoop、纯开源、支持tez
+		缺点：企业级安全不开源
+
+	MapR
+
+
+
+
+
+
+
+
+
+
+
+
+
+

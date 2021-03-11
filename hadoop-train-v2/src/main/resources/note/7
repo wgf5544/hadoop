@@ -1,0 +1,182 @@
+HDFS上的文件并没有schema的概念
+	schema？
+
+Hive底层执行引擎支持：MR/Tez/Spark
+
+统一元数据管理：
+	Hive数据是存放在HDFS
+	元数据信息(记录数据的数据)是存放在MySQL中
+	SQL on Hadoop： Hive、Spark SQL、impala....
+
+
+Hive体系架构
+	client：shell、thrift/jdbc(server/jdbc)、WebUI(HUE/Zeppelin)
+	metastore：==> MySQL
+		database：name、location、owner....
+		table：name、location、owner、column name/type ....
+
+
+Hive部署
+	1）下载
+	2）解压到~/app
+	3）添加HIVE_HOME到系统环境变量
+	4）修改配置
+		hive-env.sh
+		hive-site.xml
+	5) 拷贝MySQL驱动包到$HIVE_HOME/lib
+	
+	6) 前提是要准备安装一个MySQL数据库，yum install去安装一个MySQL数据库
+		https://www.cnblogs.com/julyme/p/5969626.html
+
+
+<?xml version="1.0"?>
+<?xml-stylesheet type="text/xsl" href="configuration.xsl"?>
+
+<configuration>
+<property>
+  <name>javax.jdo.option.ConnectionURL</name>
+  <value>jdbc:mysql://hadoop000:3306/hadoop_hive?createDatabaseIfNotExist=true</value>
+</property>
+
+<property>
+  <name>javax.jdo.option.ConnectionDriverName</name>
+  <value>com.mysql.jdbc.Driver</value>
+</property>
+
+<property>
+  <name>javax.jdo.option.ConnectionUserName</name>
+  <value>root</value>
+</property>
+
+<property>
+  <name>javax.jdo.option.ConnectionPassword</name>
+  <value>root</value>
+</property>
+</configuration>
+
+
+
+DDL：Hive Data Definition Language
+	create、delete、alter...
+
+Hive数据抽象/结构
+	database     HDFS一个目录
+		table    HDFS一个目录
+			data  文件 
+			partition 分区表  HDFS一个目录
+				data  文件 
+				bucket  分桶   HDFS一个文件
+
+
+CREATE (DATABASE|SCHEMA) [IF NOT EXISTS] database_name
+  [COMMENT database_comment]
+  [LOCATION hdfs_path]
+  [WITH DBPROPERTIES (property_name=property_value, ...)];
+
+CREATE DATABASE IF NOT EXISTS hive;
+
+CREATE DATABASE IF NOT EXISTS hive2 LOCATION '/test/location';
+
+
+CREATE DATABASE IF NOT EXISTS hive3 
+WITH DBPROPERTIES('creator'='pk');
+
+/user/hive/warehouse是Hive默认的存储在HDFS上的路径
+
+CREATE TABLE emp(
+empno int,
+ename string,
+job string,
+mgr int,
+hiredate string,
+sal double,
+comm double,
+deptno int
+) ROW FORMAT DELIMITED FIELDS TERMINATED BY '\t';
+
+LOAD DATA LOCAL INPATH '/home/hadoop/data/emp.txt' OVERWRITE INTO TABLE emp;
+
+
+
+CREATE [TEMPORARY] [EXTERNAL] TABLE [IF NOT EXISTS] [db_name.]table_name    -- (Note: TEMPORARY available in Hive 0.14.0 and later)
+  [(col_name data_type [COMMENT col_comment], ... [constraint_specification])]
+  [COMMENT table_comment]
+  [PARTITIONED BY (col_name data_type [COMMENT col_comment], ...)]
+  [CLUSTERED BY (col_name, col_name, ...) [SORTED BY (col_name [ASC|DESC], ...)] INTO num_buckets BUCKETS]
+  [SKEWED BY (col_name, col_name, ...)                  -- (Note: Available in Hive 0.10.0 and later)]
+     ON ((col_value, col_value, ...), (col_value, col_value, ...), ...)
+     [STORED AS DIRECTORIES]
+  [
+   [ROW FORMAT row_format] 
+   [STORED AS file_format]
+     | STORED BY 'storage.handler.class.name' [WITH SERDEPROPERTIES (...)]  -- (Note: Available in Hive 0.6.0 and later)
+  ]
+  [LOCATION hdfs_path]
+  [TBLPROPERTIES (property_name=property_value, ...)]   -- (Note: Available in Hive 0.6.0 and later)
+  [AS select_statement];   -- (Note: Available in Hive 0.5.0 and later; not supported for external tables)
+
+
+LOAD DATA [LOCAL] INPATH 'filepath' [OVERWRITE] INTO TABLE tablename [PARTITION (partcol1=val1, partcol2=val2 ...)]
+
+LOCAL：本地系统，如果没有local那么就是指的HDFS的路径
+OVERWRITE：是否数据覆盖，如果没有那么就是数据追加
+
+LOAD DATA LOCAL INPATH '/home/hadoop/data/emp.txt' OVERWRITE INTO TABLE emp;
+
+LOAD DATA INPATH 'hdfs://hadoop000:8020/data/emp.txt' INTO TABLE emp;
+
+INSERT OVERWRITE LOCAL DIRECTORY '/tmp/hive/'
+ROW FORMAT DELIMITED FIELDS TERMINATED BY '\t'
+select empno,ename,sal,deptno from emp;
+
+
+聚合： max/min/sum/avg
+
+分组函数： group by
+	求每个部门的平均工资
+	出现在select中的字段，如果没有出现在聚合函数里，那么一定要实现在group by里
+	select deptno, avg(sal) from emp group by deptno;
+
+	求每个部门、工作岗位的平均工资
+	select deptno,job avg(sal) from emp group by deptno,job;
+
+
+	求每个部门的平均工资大于2000的部门
+	select deptno, avg(sal) avg_sal from emp group by deptno where avg_sal>2000;
+
+	对于分组函数过滤要使用having
+select deptno, avg(sal) avg_sal from emp group by deptno having avg_sal>2000;	
+
+
+
+join ： 多表
+
+emp
+dept
+
+
+CREATE TABLE dept(
+deptno int,
+dname string,
+loc string
+) ROW FORMAT DELIMITED FIELDS TERMINATED BY '\t';
+
+LOAD DATA LOCAL INPATH '/home/hadoop/data/dept.txt' OVERWRITE INTO TABLE dept;
+
+explain EXTENDED
+select 
+e.empno,e.ename,e.sal,e.deptno,d.dname
+from emp e join dept d
+on e.deptno=d.deptno;
+
+
+
+
+
+
+
+
+
+
+
+

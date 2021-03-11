@@ -1,0 +1,99 @@
+HDFS 数据存储
+	为什么说Hadoop不适合存小文件
+	
+Usage: hadoop archive -archiveName name -p <parent> [-r <replication factor>] <src>* <dest>
+
+hadoop archive -archiveName pksmall.har -p /small /pksmallhar
+
+
+
+HDFS上的数据基本上是不删除
+	Flume ==> HDFS ==> MR/Spark/Flink... 
+						==> Hive/Spark SQL
+						==> HBase
+	1分钟	 200G          80G
+	10条业务线  3副本
+	
+	HDFS数据：删  定时备份
+	
+	原始数据是否还有用？
+		有用？ 怎么办
+		没用？ 怎么办
+
+
+hadoop distcp hdfs://nn1:8020/foo/bar hdfs://nn2:8020/bar/foo
+集群之间的数据传输
+
+
+
+生产集群 Hive/Spark SQL   ==> 备份到备份集群中去
+emp/day=20190101
+	....
+	....
+	....
+
+hadoop distcp ...
+
+
+数据：数据(HDFS) + 元数据(MySQL)
+       生产                      备份
+1)  元数据还在,数据没了      数据有,元数据没
+2)  如果我真的真的真的想查询老的(备份走的)数据咋办?
+
+scp 
+	Mac 终端  
+	想从本地拷贝数据到服务器 scp -r xxxx hadoop@hadoop000:~/data/
+	
+	crt rz sz
+	xshell
+	
+	
+	
+
+回收站  垃圾桶
+HDFS 
+生产上回收站是一定要开启的，我司是1天
+单位是分钟
+
+思考题：HDFS API delete数据是否会走垃圾桶
+大数据作业/应用程序 通过API去调用HDFS文件系统的删除操作
+	fileSystem.delete(new Path(...), true)
+	spark.read.format("..").write.mode("overwrite").save(...)
+
+/spark/a/data	
+/spark/a/xxx	
+	
+try{
+	...
+} catch(Exception e){
+	...
+} finally {
+	// 资源释放：connection io ...
+}
+
+
+虽然是删除东西在垃圾桶中了，但是此时数据其实都还在HDFS上
+HDFS的block大小并为发生变化
+
+??? 
+
+清空
+	hadoop fs -expunge
+	
+	/user/xxxx/.Trash
+
+
+
+
+
+
+
+
+
+	
+	
+	
+
+
+
+

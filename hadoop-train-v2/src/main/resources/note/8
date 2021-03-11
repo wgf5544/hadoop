@@ -1,0 +1,91 @@
+Hive外部表
+
+CREATE TABLE emp(
+empno int,
+ename string,
+job string,
+mgr int,
+hiredate string,
+sal double,
+comm double,
+deptno int
+) ROW FORMAT DELIMITED FIELDS TERMINATED BY '\t';
+
+LOAD DATA LOCAL INPATH '/home/hadoop/data/emp.txt' OVERWRITE INTO TABLE emp;
+
+MANAGED_TABLE:内部表
+删除表：HDFS上的数据被删除 & Meta也被删除
+
+CREATE EXTERNAL TABLE emp_external(
+empno int,
+ename string,
+job string,
+mgr int,
+hiredate string,
+sal double,
+comm double,
+deptno int
+) ROW FORMAT DELIMITED FIELDS TERMINATED BY '\t'
+location '/external/emp/';
+
+LOAD DATA LOCAL INPATH '/home/hadoop/data/emp.txt' OVERWRITE INTO TABLE emp_external;
+
+
+EXTERNAL_TABLE
+	HDFS上的数据不被删除 & Meta被删除
+
+
+分区表
+
+create external table track_info(
+ip string,
+country string,
+province string,
+city string,
+url string,
+time string,
+page string
+) partitioned by (day string)
+ROW FORMAT DELIMITED FIELDS TERMINATED BY '\t'
+location '/project/trackinfo/';
+
+crontab表达式进行调度
+Azkaban调度：ETLApp==>其他的统计分析 
+	PySpark及调度系统
+		https://coding.imooc.com/class/chapter/249.html#Anchor
+
+
+LOAD DATA INPATH 'hdfs://hadoop000:8020/project/input/etl' OVERWRITE INTO TABLE track_info partition(day='2013-07-21');
+
+select count(*) from track_info where day='2013-07-21'  ;
+
+select province,count(*) as cnt from track_info where day='2013-07-21' group by province ;
+
+
+
+省份统计表
+create table track_info_province_stat(
+province string,
+cnt bigint
+) partitioned by (day string)
+ROW FORMAT DELIMITED FIELDS TERMINATED BY '\t';
+
+insert overwrite table track_info_province_stat partition(day='2013-07-21') 
+select province,count(*) as cnt from track_info where day='2013-07-21' group by province ;
+
+到现在为止，我们统计的数据已经在Hive表track_info_province_stat
+而且这个表是一个分区表，后续统计报表的数据可以直接从这个表中查询
+也可以将hive表的数据导出到RDBMS（sqoop）
+
+
+1）ETL
+2）把ETL输出的数据加载到track_info分区表里
+3）各个维度统计结果的数据输出到各自维度的表里（track_info_province_stat）
+4）将数据导出（optional）
+
+
+如果一个框架不能落地到SQL层面，这个框架就不是一个非常适合的框架
+
+
+
+
